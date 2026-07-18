@@ -6,3 +6,6 @@ node_modules/
 
 # Ignore all files matching an extension
 *.log
+
+.vercel
+.env
