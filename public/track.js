@@ -56,7 +56,7 @@
 			navigator.sendBeacon( 'https://fbpi.jeancarlosnovaes.com/api/collect', body );
 		} else
 		{
-			fetch( '/api/collect', { method: 'POST', body, keepalive: true } );
+			fetch( 'https://fbpi.jeancarlosnovaes.com/api/collect', { method: 'POST', body, keepalive: true } );
 		}
 	};
 
