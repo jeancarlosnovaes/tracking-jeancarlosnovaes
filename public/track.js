@@ -62,4 +62,5 @@
 
 	// Dispara PageView automático a cada carregamento
 	window.trackEvent( 'PageView' );
+	window.trackEvent( 'ViewContent', { url: window.location.href, product: document.title, referrer: document.referrer, timestamp: new Date().toISOString() } );
 } )();

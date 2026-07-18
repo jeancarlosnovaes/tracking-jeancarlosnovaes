@@ -20,7 +20,7 @@ export async function postMetaEvents( events: MetaEventObject[] ) {
 	}
 
 	const res = await fetch(
-		`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
+		`https://graph.facebook.com/v25.0/${pixelId}/events?access_token=${accessToken}`,
 		{
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

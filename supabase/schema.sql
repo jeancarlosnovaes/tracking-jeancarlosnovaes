@@ -85,15 +85,8 @@ create table if not exists purchases (
   is_subscription boolean default false
 );
 
-create index if not exists idx_purchases_buyer_email on purchases(buyer_email);
-create index if not exists idx_purchases_status on purchases(status);
-
-drop trigger if exists trg_purchases_updated_at on purchases;
-create trigger trg_purchases_updated_at
-  before update on purchases
-  for each row execute function set_updated_at();
-
--- Trigger simples para manter updated_at em dia
+-- Função usada pelos triggers abaixo pra manter updated_at em dia —
+-- precisa existir ANTES de qualquer "create trigger" que a referencie.
 create or replace function set_updated_at()
 returns trigger as $$
 begin
@@ -101,6 +94,14 @@ begin
   return new;
 end;
 $$ language plpgsql;
+
+create index if not exists idx_purchases_buyer_email on purchases(buyer_email);
+create index if not exists idx_purchases_status on purchases(status);
+
+drop trigger if exists trg_purchases_updated_at on purchases;
+create trigger trg_purchases_updated_at
+  before update on purchases
+  for each row execute function set_updated_at();
 
 drop trigger if exists trg_leads_updated_at on leads;
 create trigger trg_leads_updated_at
