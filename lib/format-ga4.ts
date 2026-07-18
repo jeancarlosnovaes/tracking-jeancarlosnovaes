@@ -31,6 +31,7 @@ export async function buildGa4Event( evt: NormalizedEvent ): Promise<Ga4Payload 
 		if ( evt.commerce.value !== undefined ) params.value = evt.commerce.value;
 		if ( evt.commerce.transactionId ) params.transaction_id = evt.commerce.transactionId;
 		if ( evt.commerce.paymentMethod ) params.payment_type = evt.commerce.paymentMethod;
+		if ( evt.commerce.coupon ) params.coupon = evt.commerce.coupon; // sem equivalente na Meta
 
 		if ( evt.commerce.productId || evt.commerce.productName )
 		{
@@ -38,8 +39,9 @@ export async function buildGa4Event( evt: NormalizedEvent ): Promise<Ga4Payload 
 				{
 					item_id: evt.commerce.productId ?? evt.commerce.productName,
 					item_name: evt.commerce.productName ?? evt.commerce.productId,
+					item_category: evt.commerce.contentCategory,
 					price: evt.commerce.value,
-					quantity: 1,
+					quantity: evt.commerce.quantity ?? 1,
 				},
 			];
 		}

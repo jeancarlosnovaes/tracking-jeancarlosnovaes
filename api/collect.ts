@@ -5,6 +5,16 @@ import type { CanonicalEventName } from '../lib/event-catalog';
 
 export const config = { runtime: 'edge' };
 
+// site principal (jeancarlosnovaes.com) chamando a API num subdomínio
+// separado (fbapi.jeancarlosnovaes.com) é uma origem diferente — sem esse
+// header o navegador bloqueia a leitura da resposta pelo fetch (o
+// navigator.sendBeacon não é afetado, mas deixamos os dois cobertos).
+const CORS_HEADERS = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 interface CollectPayload {
 	event_name: CanonicalEventName;
 	event_id: string;
@@ -25,12 +35,20 @@ interface CollectPayload {
 	gclid?: string;
 	value?: number;
 	currency?: string;
+	category?: string;
+	coupon?: string;
+	quantity?: number;
 }
 
 export default async function handler( req: Request ): Promise<Response> {
+	if ( req.method === 'OPTIONS' )
+	{
+		return new Response( null, { status: 204, headers: CORS_HEADERS } );
+	}
+
 	if ( req.method !== 'POST' )
 	{
-		return new Response( 'Method not allowed', { status: 405 } );
+		return new Response( 'Method not allowed', { status: 405, headers: CORS_HEADERS } );
 	}
 
 	let payload: CollectPayload;
@@ -39,12 +57,12 @@ export default async function handler( req: Request ): Promise<Response> {
 		payload = await req.json();
 	} catch
 	{
-		return new Response( 'Invalid JSON', { status: 400 } );
+		return new Response( 'Invalid JSON', { status: 400, headers: CORS_HEADERS } );
 	}
 
 	if ( !payload.event_name || !payload.event_id )
 	{
-		return new Response( 'Missing event_name or event_id', { status: 400 } );
+		return new Response( 'Missing event_name or event_id', { status: 400, headers: CORS_HEADERS } );
 	}
 
 	const clientIp = req.headers.get( 'x-forwarded-for' )?.split( ',' )[ 0 ]?.trim() ?? '';
@@ -118,6 +136,9 @@ export default async function handler( req: Request ): Promise<Response> {
 					value: payload.value,
 					currency: payload.currency ?? 'BRL',
 					productName: payload.product,
+					contentCategory: payload.category,
+					coupon: payload.coupon,
+					quantity: payload.quantity,
 				}
 				: undefined,
 		raw: payload,
@@ -127,6 +148,6 @@ export default async function handler( req: Request ): Promise<Response> {
 
 	return new Response( JSON.stringify( { ok: true, ...result } ), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
 	} );
 }

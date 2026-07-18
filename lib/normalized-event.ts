@@ -34,6 +34,9 @@ export interface NormalizedEvent {
 		currency?: string;
 		productId?: string;
 		productName?: string;
+		contentCategory?: string;
+		quantity?: number; // padrão 1 quando omitido
+		coupon?: string; // usado só pelo GA4 — a Meta não tem esse parâmetro
 		paymentMethod?: string;
 		subscriptionId?: string;
 	};

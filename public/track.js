@@ -1,4 +1,26 @@
 ( function () {
+	// Descobre a origem de onde ESTE script foi carregado (ex:
+	// https://fbapi.jeancarlosnovaes.com), pra montar a URL absoluta do
+	// endpoint. Necessário porque o track.js roda embutido no site principal
+	// (jeancarlosnovaes.com), que pode ser um domínio diferente do domínio
+	// onde a API está hospedada — um caminho relativo tipo '/api/collect'
+	// resolveria pro domínio ERRADO (o da página, não o do script).
+	var scriptOrigin = ( function () {
+		var current = document.currentScript;
+		if ( current && current.src )
+		{
+			try
+			{
+				return new URL( current.src ).origin;
+			} catch ( e )
+			{
+				/* ignora e cai no fallback abaixo */
+			}
+		}
+		return window.location.origin;
+	} )();
+	var COLLECT_ENDPOINT = scriptOrigin + '/api/collect';
+
 	function getCookie( name ) {
 		const match = document.cookie.match( new RegExp( '(^| )' + name + '=([^;]+)' ) );
 		return match ? decodeURIComponent( match[ 2 ] ) : null;
@@ -31,8 +53,17 @@
 	localStorage.setItem( '_track_ctx', JSON.stringify( ctx ) );
 
 	// API pública: chame em qualquer lugar do site
-	// trackEvent('Lead', { email, phone, product: 'Simplificando a Matemática' })
+	// trackEvent('Purchase', { email, phone, name, product, value: 197, currency: 'BRL' })
+	//
+	// Campos aceitos em `data` (todos opcionais, use o que fizer sentido pro evento):
+	//   email, phone, name        -> viram user_data hasheado (Meta) / user_data (GA4)
+	//   product                   -> content_name (Meta) / item_name (GA4)
+	//   value, currency           -> value/currency nos dois
+	//   category                  -> content_category (Meta) / item_category (GA4)
+	//   coupon                    -> coupon (só GA4 — a Meta não tem esse parâmetro)
+	//   quantity                  -> num_items/contents[].quantity (Meta) / items[].quantity (GA4)
 	window.trackEvent = function ( eventName, data ) {
+		data = data || {};
 		const payload = Object.assign(
 			{
 				event_name: eventName,
@@ -43,24 +74,33 @@
 				ga_client_id: getGaClientId(),
 			},
 			ctx,
-			{ custom_data: data || {} },
-			data && data.email ? { email: data.email } : {},
-			data && data.phone ? { phone: data.phone } : {},
-			data && data.name ? { name: data.name } : {},
-			data && data.product ? { product: data.product } : {}
+			data.email ? { email: data.email } : {},
+			data.phone ? { phone: data.phone } : {},
+			data.name ? { name: data.name } : {},
+			data.product ? { product: data.product } : {},
+			data.value !== undefined ? { value: data.value } : {},
+			data.currency ? { currency: data.currency } : {},
+			data.category ? { category: data.category } : {},
+			data.coupon ? { coupon: data.coupon } : {},
+			data.quantity !== undefined ? { quantity: data.quantity } : {}
 		);
 
 		const body = JSON.stringify( payload );
 		if ( navigator.sendBeacon )
 		{
-			navigator.sendBeacon( 'https://fbapi.jeancarlosnovaes.com/api/collect', body );
+			navigator.sendBeacon( COLLECT_ENDPOINT, body );
 		} else
 		{
-			fetch( 'https://fbapi.jeancarlosnovaes.com/api/collect', { method: 'POST', body, keepalive: true } );
+			fetch( COLLECT_ENDPOINT, { method: 'POST', body, keepalive: true } );
 		}
 	};
 
 	// Dispara PageView automático a cada carregamento
 	window.trackEvent( 'PageView' );
-	window.trackEvent( 'ViewContent', { url: window.location.href, product: document.title, referrer: document.referrer, timestamp: new Date().toISOString() } );
+
+	// Dispara ViewContent também automaticamente. "product" aqui vira
+	// content_name (Meta) / item_name (GA4) — por padrão usa o <title> da
+	// página. Numa página de produto específica, prefira chamar de novo com
+	// o nome certo: trackEvent('ViewContent', { product: 'Nome do Produto' })
+	window.trackEvent( 'ViewContent', { product: document.title } );
 } )();

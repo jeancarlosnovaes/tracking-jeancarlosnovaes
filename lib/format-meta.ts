@@ -58,6 +58,9 @@ export async function buildMetaEvent(
 	{
 		userData.country = [ await sha256Hex( normalizeCountryForMeta( evt.user.countryIso ) ) ];
 	}
+	// subscription_id fica no user_data (não é hasheado) — é como a Meta
+	// identifica a assinatura do usuário, análogo a um "order_id" recorrente
+	if ( evt.commerce?.subscriptionId ) userData.subscription_id = evt.commerce.subscriptionId;
 	// fbp, fbc, IP e user-agent NUNCA são hasheados — vão em texto puro
 	if ( evt.user.clientIp ) userData.client_ip_address = evt.user.clientIp;
 	if ( evt.user.userAgent ) userData.client_user_agent = evt.user.userAgent;
@@ -69,10 +72,24 @@ export async function buildMetaEvent(
 	if ( evt.commerce?.value !== undefined ) customData.value = evt.commerce.value;
 	if ( evt.commerce?.productId ) customData.content_ids = [ evt.commerce.productId ];
 	if ( evt.commerce?.productName ) customData.content_name = evt.commerce.productName;
+	if ( evt.commerce?.contentCategory ) customData.content_category = evt.commerce.contentCategory;
 	if ( evt.commerce?.productId || evt.commerce?.productName )
 	{
+		const quantity = evt.commerce.quantity ?? 1;
 		customData.content_type = 'product';
-		customData.num_items = 1;
+		customData.num_items = quantity;
+		// "contents" é o formato mais completo (id + quantidade + preço
+		// unitário) — a Meta recomenda mandar junto com content_ids, não no lugar
+		if ( evt.commerce.productId )
+		{
+			customData.contents = [
+				{
+					id: evt.commerce.productId,
+					quantity,
+					item_price: evt.commerce.value,
+				},
+			];
+		}
 	}
 	if ( evt.commerce?.transactionId ) customData.order_id = evt.commerce.transactionId;
 
