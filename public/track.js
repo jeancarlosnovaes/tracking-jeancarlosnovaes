@@ -53,10 +53,10 @@
 		const body = JSON.stringify( payload );
 		if ( navigator.sendBeacon )
 		{
-			navigator.sendBeacon( 'https://fbpi.jeancarlosnovaes.com/api/collect', body );
+			navigator.sendBeacon( 'https://fbapi.jeancarlosnovaes.com/api/collect', body );
 		} else
 		{
-			fetch( 'https://fbpi.jeancarlosnovaes.com/api/collect', { method: 'POST', body, keepalive: true } );
+			fetch( 'https://fbapi.jeancarlosnovaes.com/api/collect', { method: 'POST', body, keepalive: true } );
 		}
 	};
 
