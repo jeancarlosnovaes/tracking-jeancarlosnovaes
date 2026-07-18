@@ -53,7 +53,7 @@
 		const body = JSON.stringify( payload );
 		if ( navigator.sendBeacon )
 		{
-			navigator.sendBeacon( '/api/collect', body );
+			navigator.sendBeacon( 'https://fbpi.jeancarlosnovaes.com/api/collect', body );
 		} else
 		{
 			fetch( '/api/collect', { method: 'POST', body, keepalive: true } );
