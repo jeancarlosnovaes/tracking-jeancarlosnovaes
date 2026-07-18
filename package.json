@@ -1,0 +1,16 @@
+{
+  "name": "tracking-server-side",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vercel": "^56.3.1"
+  }
+}
